@@ -1,0 +1,79 @@
+#VRML_SIM R2025a utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/robots/dji/mavic/protos/Mavic2Pro.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/apartment_structure/protos/Wall.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/RectangleArena.proto"
+
+WorldInfo {
+}
+Viewpoint {
+  orientation 0.19208033915863432 0.8340902324011212 -0.5171060118793315 0.7660934402885651
+  position -17.377397689417517 11.963026889865551 12.77904765659195
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+Mavic2Pro {
+  hidden position_0_0 -1.0635652326169197e-08
+  hidden linearVelocity_0 -2.365012995372894e-11 -4.5296291113167776e-14 7.562196350964104e-11
+  hidden angularVelocity_0 2.1885376440488428e-12 -1.1570932558030302e-09 -5.352092448817596e-16
+  hidden position_5_0 2.4758364330971933e-08
+  hidden linearVelocity_5 -2.1978961860390417e-10 -1.0579197376845582e-11 -2.2046421129125506e-07
+  hidden angularVelocity_5 2.9407719517476827e-09 -1.0529466130358022e-09 -5.248192005256234e-08
+  hidden rotation_6 0 1 0 2.9802322387695313e-08
+  hidden position_6_0 7.297292958571738e-11
+  hidden linearVelocity_6 2.594083273180216e-10 8.638429430570331e-11 -3.672892984480119e-07
+  hidden angularVelocity_6 1.1895908917555484e-09 1.102788306588326e-07 -5.2481421476841496e-08
+  hidden linearVelocity_7 -2.5421539081345874e-10 -2.743855752326786e-11 -4.410073080825716e-07
+  hidden angularVelocity_7 -4.55202201071286e-08 1.0961250233665288e-07 -5.5761707541615726e-08
+  translation 6.952144580161541 -6.89797034478128 0.06557267218981884
+  rotation 6.351050641942792e-05 -0.9999999979424464 -9.028999567385247e-06 0.07011179445082355
+  controller "drone_supervisor"
+  supervisor TRUE
+}
+DEF OBSTACLE Wall {
+  translation 4.11 -6.99 0
+  name ""
+  size 0.5 1 4
+}
+DEF OBSTACLE Wall {
+  translation 5.5 -4.79 0
+  rotation 0 0 1 -1.5707953071795862
+  name ""
+  size 0.5 4 4
+}
+DEF OBSTACLE Wall {
+  translation -2.74 -0.35 0
+  rotation 0 0 1 -1.5707953071795862
+  name "(1)"
+  size 0.5 10 4
+}
+DEF OBSTACLE Wall {
+  translation 0.21 3.26 0
+  rotation 0 0 1 -1.5707953071795862
+  name "(1)(1)"
+  size 0.5 10 4
+}
+RectangleArena {
+  floorSize 15 15
+  wallHeight 0.2
+}
+DEF TARGET Solid {
+  translation -6.01 5.99 0
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 1 0 0
+        roughness 1
+        metalness 0
+      }
+      geometry Cylinder {
+        height 0.05
+      }
+    }
+  ]
+  name "GOAL_POINT"
+}

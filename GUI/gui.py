@@ -1,141 +1,217 @@
+# ==========================================================
+# FIX PYTHON PATH (AGAR IMPORT BACKEND TIDAK ERROR)
+# ==========================================================
+import os
+import sys
+
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
+
+# ==========================================================
+# IMPORT
+# ==========================================================
+import math
 import tkinter as tk
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
+from Backend.map_client import request_map
 
+# ==========================================================
+# GUI CONFIG
+# ==========================================================
+CANVAS_W = 900
+CANVAS_H = 600
 
+GRID_SIZE = 25          # ukuran grid (px)
+WALL_MIN_THICK = 16     # ketebalan minimum obstacle
+PADDING = 60            # margin canvas
+
+# ==========================================================
+# GUI CLASS
+# ==========================================================
 class DronePlannerGUI:
+
     def __init__(self, root):
         self.root = root
         self.root.title("Drone Path Planning GUI")
-        self.root.geometry("1100x650")
-        self.root.minsize(1000, 600)
+        self.root.geometry("1200x700")
 
-        # ================= MAIN CONTAINER =================
-        main_frame = ttk.Frame(root)
-        main_frame.pack(fill=BOTH, expand=True)
+        main = ttk.Frame(root)
+        main.pack(fill=BOTH, expand=True)
 
-        # ================= LEFT CONTROL PANEL =================
-        control_frame = ttk.Frame(
-            main_frame,
-            padding=20,
-            width=280
-        )
-        control_frame.pack(side=LEFT, fill=Y)
-        control_frame.pack_propagate(False)
+        # ================= LEFT PANEL =================
+        left = ttk.Frame(main, width=300, padding=20)
+        left.pack(side=LEFT, fill=Y)
+        left.pack_propagate(False)
 
         ttk.Label(
-            control_frame,
-            text="Drone Planner",
+            left, text="Drone Planner",
             font=("Segoe UI", 18, "bold")
-        ).pack(pady=(0, 30))
+        ).pack(pady=10)
 
-        # ---------- Algorithm Selection ----------
-        ttk.Label(
-            control_frame,
-            text="Path Planning Algorithm",
-            font=("Segoe UI", 10)
-        ).pack(anchor="w", pady=(0, 5))
-
-        self.algorithm_var = ttk.StringVar(value="RRT")
-
-        algo_combo = ttk.Combobox(
-            control_frame,
-            textvariable=self.algorithm_var,
-            values=["RRT", "RRT*"],
-            state="readonly"
-        )
-        algo_combo.pack(fill=X, pady=(0, 20))
-
-        # ---------- Start Mapping ----------
-        self.btn_mapping = ttk.Button(
-            control_frame,
+        ttk.Button(
+            left,
             text="Start Mapping",
             bootstyle=SUCCESS,
             command=self.start_mapping
+        ).pack(fill=X, pady=10)
+
+        ttk.Label(
+            left, text="World Coordinates",
+            font=("Segoe UI", 12, "bold")
+        ).pack(anchor=W, pady=(10, 5))
+
+        self.text = tk.Text(
+            left, height=32,
+            font=("Consolas", 9)
         )
-        self.btn_mapping.pack(fill=X, pady=6)
+        self.text.pack(fill=BOTH, expand=True)
 
-        # ---------- Start Simulation ----------
-        self.btn_simulation = ttk.Button(
-            control_frame,
-            text="Start Simulation",
-            bootstyle=WARNING,
-            command=self.start_simulation
-        )
-        self.btn_simulation.pack(fill=X, pady=6)
-
-        # ---------- Status ----------
-        ttk.Separator(control_frame).pack(fill=X, pady=25)
-
-        self.status_label = ttk.Label(
-            control_frame,
-            text="Status: Idle",
-            foreground="#0078D7",
-            font=("Segoe UI", 10)
-        )
-        self.status_label.pack(anchor="w")
-
-        # ================= RIGHT VISUALIZATION PANEL =================
-        visual_frame = ttk.Frame(main_frame)
-        visual_frame.pack(side=RIGHT, fill=BOTH, expand=True)
+        # ================= RIGHT PANEL =================
+        right = ttk.Frame(main, padding=10)
+        right.pack(side=RIGHT, fill=BOTH, expand=True)
 
         self.canvas = tk.Canvas(
-            visual_frame,
+            right,
             bg="white",
-            highlightthickness=0
+            width=CANVAS_W,
+            height=CANVAS_H
         )
         self.canvas.pack(fill=BOTH, expand=True)
 
-        # Draw initial grid
+    # ======================================================
+    # GRID
+    # ======================================================
+    def draw_grid(self):
+        for x in range(0, CANVAS_W, GRID_SIZE):
+            self.canvas.create_line(x, 0, x, CANVAS_H, fill="#eeeeee")
+        for y in range(0, CANVAS_H, GRID_SIZE):
+            self.canvas.create_line(0, y, CANVAS_W, y, fill="#eeeeee")
+
+    # ======================================================
+    # START MAPPING
+    # ======================================================
+    def start_mapping(self):
+        self.canvas.delete("all")
+        self.text.delete("1.0", tk.END)
+
         self.draw_grid()
 
-    # ================= PLACEHOLDER CALLBACKS =================
-    def start_mapping(self):
-        algorithm = self.algorithm_var.get()
-        self.status_label.config(
-            text=f"Status: Mapping using {algorithm}"
-        )
+        world = request_map()
 
-        # TODO (future):
-        # - Request obstacle data via TCP
-        # - Request drone & goal position
-        # - Run RRT / RRT*
-        # - Draw 2D path result
-
-    def start_simulation(self):
-        self.status_label.config(
-            text="Status: Simulating"
-        )
-
-        # TODO (future):
-        # - Send path to backend
-        # - Trigger Webots execution
-
-    # ================= CANVAS GRID =================
-    def draw_grid(self):
-        self.canvas.delete("grid")
-
-        width = 2000
-        height = 2000
-        grid_size = 50
-
-        for x in range(0, width, grid_size):
-            self.canvas.create_line(
-                x, 0, x, height,
-                fill="#e5e5e5",
-                tags="grid"
+        # ===== TEXT INFO =====
+        self.text.insert(tk.END, "OBSTACLES:\n")
+        for i, o in enumerate(world["obstacles"], 1):
+            self.text.insert(
+                tk.END,
+                f"{i}. x={o['x']:.2f}, y={o['y']:.2f}, "
+                f"w={o['width']}, h={o['height']}, "
+                f"yaw={o['yaw']:.2f}\n"
             )
 
-        for y in range(0, height, grid_size):
-            self.canvas.create_line(
-                0, y, width, y,
-                fill="#e5e5e5",
-                tags="grid"
+        self.text.insert(
+            tk.END,
+            f"\nSTART: x={world['start']['x']:.2f}, "
+            f"y={world['start']['y']:.2f}\n"
+        )
+        self.text.insert(
+            tk.END,
+            f"GOAL : x={world['goal']['x']:.2f}, "
+            f"y={world['goal']['y']:.2f}\n"
+        )
+
+        self.draw_world(world)
+
+    # ======================================================
+    # DRAW ROTATED RECTANGLE
+    # ======================================================
+    def draw_rotated_rect(self, cx, cy, w, h, yaw):
+        hw, hh = w / 2, h / 2
+
+        corners = [
+            (-hw, -hh),
+            ( hw, -hh),
+            ( hw,  hh),
+            (-hw,  hh)
+        ]
+
+        points = []
+        for x, y in corners:
+            rx = x * math.cos(yaw) - y * math.sin(yaw)
+            ry = x * math.sin(yaw) + y * math.cos(yaw)
+            points.append(cx + rx)
+            points.append(cy + ry)
+
+        self.canvas.create_polygon(points, fill="black", outline="")
+
+    # ======================================================
+    # DRAW WORLD (TOP-DOWN X–Y)
+    # ======================================================
+    def draw_world(self, world):
+        xs = [o["x"] for o in world["obstacles"]] + \
+             [world["start"]["x"], world["goal"]["x"]]
+        ys = [o["y"] for o in world["obstacles"]] + \
+             [world["start"]["y"], world["goal"]["y"]]
+
+        minx, maxx = min(xs), max(xs)
+        miny, maxy = min(ys), max(ys)
+
+        scale = min(
+            (CANVAS_W - 2 * PADDING) / (maxx - minx + 1e-6),
+            (CANVAS_H - 2 * PADDING) / (maxy - miny + 1e-6)
+        )
+
+        def wx(x):
+            return PADDING + (x - minx) * scale
+
+        def wy(y):
+            # BALIK Y (TOP-DOWN)
+            return CANVAS_H - (PADDING + (y - miny) * scale)
+
+        def snap(v):
+            return round(v / GRID_SIZE) * GRID_SIZE
+
+        # ===== OBSTACLES =====
+        for o in world["obstacles"]:
+            cx = snap(wx(o["x"]))
+            cy = snap(wy(o["y"]))
+
+            w = max(o["width"] * scale, WALL_MIN_THICK)
+            h = max(o["height"] * scale, WALL_MIN_THICK)
+
+            self.draw_rotated_rect(
+                cx, cy,
+                w, h,
+                o["yaw"]
             )
 
+        # ===== START =====
+        sx = snap(wx(world["start"]["x"]))
+        sy = snap(wy(world["start"]["y"]))
 
-# ================= MAIN ENTRY =================
+        self.canvas.create_oval(
+            sx - 7, sy - 7,
+            sx + 7, sy + 7,
+            fill="blue"
+        )
+        self.canvas.create_text(sx, sy - 14, text="START")
+
+        # ===== GOAL =====
+        gx = snap(wx(world["goal"]["x"]))
+        gy = snap(wy(world["goal"]["y"]))
+
+        self.canvas.create_oval(
+            gx - 7, gy - 7,
+            gx + 7, gy + 7,
+            fill="red"
+        )
+        self.canvas.create_text(gx, gy - 14, text="GOAL")
+
+
+# ==========================================================
+# MAIN
+# ==========================================================
 if __name__ == "__main__":
-    root = ttk.Window(themename="flatly")
-    app = DronePlannerGUI(root)
-    root.mainloop()
+    app = DronePlannerGUI(ttk.Window(themename="flatly"))
+    app.root.mainloop()
